@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.pnpm-store/
+apps/extension/.next/
+apps/extension/out/
+.cursor/
+.env.local
+.env*
+.DS_Store
+pnpm-debug.log*
