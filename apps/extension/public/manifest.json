@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmarket Aggregator",
+  "description": "Aggregate and review bookmarked articles across blogs and social media.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "index.html?popup=1"
+  },
+  "options_page": "index.html?options=1",
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "permissions": [
+    "bookmarks",
+    "storage",
+    "identity",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://*/",
+    "http://*/"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
+

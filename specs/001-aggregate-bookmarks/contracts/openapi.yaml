@@ -1,0 +1,431 @@
+openapi: 3.1.0
+info:
+  title: Bookmark Aggregator Extension API
+  version: 0.1.0
+  description: >
+    Next.js(App Router) route handlers exposed to the browser extension for
+    managing sources, bookmarks, reminders, digests, and exports. All endpoints
+    assume Google OAuth (NextAuth) session cookies.
+servers:
+  - url: https://extension.localhost/api
+    description: Dev server (Next.js)
+  - url: chrome-extension://__EXTENSION_ID__/api
+    description: Packaged MV3 extension (static route handlers)
+tags:
+  - name: auth
+  - name: sources
+  - name: bookmarks
+  - name: reminders
+  - name: digest
+  - name: export
+
+paths:
+  /auth/session:
+    get:
+      tags: [auth]
+      summary: Get current session
+      responses:
+        '200':
+          description: Active session or anonymous mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSession'
+  /auth/signout:
+    post:
+      tags: [auth]
+      summary: Sign out and clear persisted data (optional)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                purgeLocalData:
+                  type: boolean
+                  default: false
+      responses:
+        '204':
+          description: Signed out
+
+  /sources:
+    get:
+      tags: [sources]
+      summary: List registered SourceRules
+      responses:
+        '200':
+          description: List of sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SourceRule' }
+    post:
+      tags: [sources]
+      summary: Create a new SourceRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceRuleCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SourceRule' }
+  /sources/{id}:
+    patch:
+      tags: [sources]
+      summary: Update SourceRule label/color/pattern
+      parameters:
+        - $ref: '#/components/parameters/SourceId'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SourceRuleUpdate' }
+      responses:
+        '200':
+          description: Updated rule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SourceRule' }
+    delete:
+      tags: [sources]
+      summary: Remove SourceRule and its bookmarks
+      parameters:
+        - $ref: '#/components/parameters/SourceId'
+      responses:
+        '204':
+          description: Deleted
+
+  /bookmarks:
+    get:
+      tags: [bookmarks]
+      summary: Query bookmarks
+      parameters:
+        - in: query
+          name: sourceId
+          schema: { type: string }
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [unread, done, snoozed]
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [savedAt, status, signalScore]
+            default: savedAt
+      responses:
+        '200':
+          description: Matching bookmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/BookmarkItem' }
+                  total:
+                    type: integer
+    post:
+      tags: [bookmarks]
+      summary: Upsert bookmark payload from Chrome bookmarks API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/BookmarkUpsert' }
+      responses:
+        '202':
+          description: Accepted and persisted
+
+  /bookmarks/{id}:
+    patch:
+      tags: [bookmarks]
+      summary: Update bookmark status or note
+      parameters:
+        - $ref: '#/components/parameters/BookmarkId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [unread, done, snoozed]
+                note:
+                  type: string
+                reminder:
+                  $ref: '#/components/schemas/ReminderPatch'
+      responses:
+        '200':
+          description: Updated bookmark
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BookmarkItem' }
+
+  /reminders:
+    post:
+      tags: [reminders]
+      summary: Create or update reminder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReminderCreate' }
+      responses:
+        '200':
+          description: Reminder scheduled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewReminder' }
+
+  /digest:
+    post:
+      tags: [digest]
+      summary: Generate manual digest snapshot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduledFor:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Digest payload
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DigestSnapshot' }
+
+  /export/google-sheets:
+    post:
+      tags: [export]
+      summary: Export bookmarks to Google Sheets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                includeFields:
+                  type: array
+                  items:
+                    type: string
+                    enum: [title, url, savedAt, status, note, source, tags, reminder]
+                sheetName:
+                  type: string
+      responses:
+        '202':
+          description: Export job queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportJob' }
+  /export/google-sheets/{id}:
+    get:
+      tags: [export]
+      summary: Check export job status
+      parameters:
+        - $ref: '#/components/parameters/ExportJobId'
+      responses:
+        '200':
+          description: Current status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportJob' }
+
+components:
+  parameters:
+    SourceId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string }
+    BookmarkId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string }
+    ExportJobId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string }
+
+  schemas:
+    AuthSession:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        user:
+          type: object
+          nullable: true
+          properties:
+            id: { type: string }
+            email: { type: string, format: email }
+            name: { type: string }
+            avatarUrl: { type: string, format: uri }
+        settings:
+          $ref: '#/components/schemas/UserSettings'
+    UserSettings:
+      type: object
+      properties:
+        digestTime: { type: string, pattern: '^[0-2][0-9]:[0-5][0-9]$' }
+        locale: { type: string }
+        theme:
+          type: string
+          enum: [light, dark, system]
+        shareDefaults: { type: boolean }
+    SourceRule:
+      type: object
+      properties:
+        id: { type: string }
+        label: { type: string }
+        type: { type: string, enum: [domain, handle] }
+        pattern: { type: string }
+        colorHex: { type: string, pattern: '^#[0-9A-Fa-f]{6}$' }
+        syncStatus:
+          type: string
+          enum: [idle, syncing, error]
+        lastSyncedAt:
+          type: string
+          nullable: true
+          format: date-time
+        errorMessage:
+          type: string
+          nullable: true
+    SourceRuleCreate:
+      type: object
+      required: [label, type, pattern]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 40 }
+        type: { type: string, enum: [domain, handle] }
+        pattern: { type: string }
+        colorHex: { type: string }
+    SourceRuleUpdate:
+      type: object
+      properties:
+        label: { type: string }
+        colorHex: { type: string }
+        pattern: { type: string }
+    BookmarkItem:
+      type: object
+      properties:
+        id: { type: string }
+        sourceRuleId: { type: string }
+        title: { type: string }
+        url: { type: string, format: uri }
+        savedAt: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [unread, done, snoozed]
+        note:
+          type: string
+          nullable: true
+        duplicateOf:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items: { type: string }
+        lastUpdatedAt: { type: string, format: date-time }
+        socialSignal:
+          $ref: '#/components/schemas/SocialSignal'
+        reminder:
+          $ref: '#/components/schemas/ReviewReminder'
+    BookmarkUpsert:
+      type: object
+      required: [id, url, title, savedAt]
+      properties:
+        id: { type: string }
+        url: { type: string, format: uri }
+        title: { type: string }
+        savedAt: { type: string, format: date-time }
+        sourceRuleId: { type: string }
+        note: { type: string }
+    SocialSignal:
+      type: object
+      properties:
+        likeCount: { type: integer, minimum: 0, nullable: true }
+        bookmarkCount: { type: integer, minimum: 0, nullable: true }
+        commentCount: { type: integer, minimum: 0, nullable: true }
+        fetchedFrom: { type: string }
+        fetchedAt: { type: string, format: date-time }
+        ttlHours: { type: integer, default: 24 }
+    ReviewReminder:
+      type: object
+      properties:
+        id: { type: string }
+        bookmarkId: { type: string }
+        scheduledFor: { type: string, format: date-time }
+        repeatCount: { type: integer, minimum: 0, maximum: 5 }
+        status:
+          type: string
+          enum: [scheduled, sent, completed, exhausted]
+        channel:
+          type: string
+          enum: [digest]
+    ReminderCreate:
+      type: object
+      required: [bookmarkId, scheduledFor]
+      properties:
+        bookmarkId: { type: string }
+        scheduledFor: { type: string, format: date-time }
+        repeatCount: { type: integer, default: 0, maximum: 5 }
+    ReminderPatch:
+      type: object
+      properties:
+        scheduledFor: { type: string, format: date-time }
+        cancel: { type: boolean }
+    DigestSnapshot:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        unreadCount: { type: integer }
+        priorityItems:
+          type: array
+          items:
+            type: object
+            properties:
+              bookmarkId: { type: string }
+              score: { type: number }
+        newSinceYesterday: { type: integer }
+        remindersDue: { type: integer }
+        summaryText: { type: string }
+    ExportJob:
+      type: object
+      properties:
+        id: { type: string }
+        status:
+          type: string
+          enum: [pending, running, succeeded, failed]
+        sheetUrl:
+          type: string
+          format: uri
+          nullable: true
+        rowCount: { type: integer }
+        requestedAt: { type: string, format: date-time }
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+

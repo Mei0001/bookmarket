@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --surface: #f9fafb;
+  --surface-alt: #ffffff;
+  --foreground: #111827;
+  --border: #e5e7eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #101828;
+    --surface-alt: #0f172a;
+    --foreground: #f8fafc;
+    --border: #1f2937;
+  }
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+}
