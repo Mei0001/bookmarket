@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { SourceRule, UserSettings } from "@bookmarket/shared-kernel";
 import { SourceRuleSchema, UserSettingsSchema } from "@bookmarket/shared-kernel";
+import { OptionsApp } from "@/features/options/OptionsApp";
+import { PopupApp } from "@/features/popup/PopupApp";
 import { clearAuthSession, loadAuthSession, saveAuthSession } from "@/lib/auth/authStore";
 import { signInWithGoogleViaLaunchWebAuthFlow } from "@/lib/auth/googleSignIn";
 import {
@@ -37,7 +40,7 @@ function newSourceRule(params: { userId: string; type: "domain" | "handle"; labe
   });
 }
 
-export default function Home() {
+function SyncHome() {
   const [session, setSession] = useState<Awaited<ReturnType<typeof loadAuthSession>>>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -285,9 +288,7 @@ export default function Home() {
         </div>
       </header>
 
-      {busy ? (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">{busy}</div>
-      ) : null}
+      {busy ? <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">{busy}</div> : null}
       {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{error}</div> : null}
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -396,4 +397,14 @@ export default function Home() {
       </section>
     </main>
   );
+}
+
+export default function Page() {
+  const searchParams = useSearchParams();
+  const isPopup = searchParams.get("popup") === "1";
+  const isOptions = searchParams.get("options") === "1";
+
+  if (isPopup) return <PopupApp />;
+  if (isOptions) return <OptionsApp />;
+  return <SyncHome />;
 }

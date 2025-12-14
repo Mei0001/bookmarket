@@ -18,7 +18,7 @@ export interface BookmarkDb extends DBSchema {
   sourceRules: {
     key: SourceRule["id"];
     value: SourceRule;
-    indexes: { userId: string; type: string };
+    indexes: { userId: string; type: string; pattern: string };
   };
   userSettings: {
     key: "singleton";
@@ -78,10 +78,12 @@ async function getDatabase() {
           const store = db.createObjectStore("sourceRules", { keyPath: "id" });
           store.createIndex("userId", "userId", { unique: false });
           store.createIndex("type", "type", { unique: false });
+          store.createIndex("pattern", "pattern", { unique: false });
         } else {
           const store = transaction.objectStore("sourceRules");
           if (!store.indexNames.contains("userId")) store.createIndex("userId", "userId", { unique: false });
           if (!store.indexNames.contains("type")) store.createIndex("type", "type", { unique: false });
+          if (!store.indexNames.contains("pattern")) store.createIndex("pattern", "pattern", { unique: false });
         }
 
         // userSettings (singleton)
@@ -198,9 +200,21 @@ export async function getAllSourceRules() {
   return db.getAll("sourceRules");
 }
 
+export async function getSourceRule(id: string) {
+  const db = await getDatabase();
+  return db.get("sourceRules", id);
+}
+
 export async function deleteSourceRule(id: string) {
   const db = await getDatabase();
   await db.delete("sourceRules", id);
+}
+
+export async function deleteSourceRules(ids: string[]) {
+  const db = await getDatabase();
+  const tx = db.transaction("sourceRules", "readwrite");
+  await Promise.all(ids.map((id) => tx.store.delete(id)));
+  await tx.done;
 }
 
 export async function getUserSettings() {
