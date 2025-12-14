@@ -2,17 +2,28 @@
   "name": "bookmarket",
   "version": "0.1.0",
   "private": true,
+  "description": "Chromium bookmark aggregator monorepo powering the Bookmarket extension",
+  "license": "MIT",
+  "type": "module",
   "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=18.18.0",
+    "pnpm": ">=9.0.0"
+  },
   "scripts": {
-    "dev": "pnpm --filter ./apps/extension run dev",
-    "build": "pnpm --filter ./apps/extension run build",
-    "lint": "pnpm --filter ./apps/extension run lint",
-    "test:unit": "pnpm --filter ./apps/extension run test:unit",
-    "test:e2e": "pnpm --filter ./apps/extension run test:e2e",
-    "pack:extension": "tsx tooling/scripts/pack-extension.ts"
+    "dev": "pnpm --filter ./apps/extension dev",
+    "build": "pnpm --filter ./apps/extension build",
+    "lint": "pnpm --filter ./apps/extension lint",
+    "typecheck": "pnpm --filter ./apps/extension typecheck",
+    "test:unit": "pnpm --filter ./apps/extension test:unit",
+    "test:e2e": "pnpm --filter ./apps/extension test:e2e",
+    "pack:extension": "tsx tooling/scripts/pack-extension.ts",
+    "tooling:pack-extension": "tsx tooling/scripts/pack-extension.ts",
+    "clean": "pnpm -r exec -- rimraf \"{node_modules,.next,.turbo,dist}\""
   },
   "devDependencies": {
     "esbuild": "^0.27.1",
+    "rimraf": "^6.0.1",
     "tsx": "^4.21.0"
   }
 }

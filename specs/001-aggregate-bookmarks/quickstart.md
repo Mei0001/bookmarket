@@ -20,11 +20,11 @@ echo "SHEETS_SERVICE_ACCOUNT_KEY='{}'" >> .env.local
 ```bash
 pnpm --filter apps/extension dev        # Next.js dev server
 pnpm --filter apps/extension build      # production build
-pnpm --filter apps/extension export     # out/ を生成
-pnpm tooling:pack-extension             # out/ + manifest から dist.zip
+pnpm --filter apps/extension export     # (= next build) out/ を生成 (Next.js 16+)
+pnpm tooling:pack-extension             # out/ + manifest から dist/extension + dist/extension.zip
 ```
 1. Chrome の `chrome://extensions` を開き、デベロッパーモードを有効化。
-2. 「パッケージ化されていない拡張機能を読み込む」で `apps/extension/dist` を指定。
+2. 「パッケージ化されていない拡張機能を読み込む」で `dist/extension` を指定。
 
 ## 4. Google サインイン
 1. Google Cloud Console で `chrome-extension://<EXT_ID>/auth/callback` と `https://extension.localhost/api/auth/callback/google` をリダイレクトURIに登録。

@@ -8,3 +8,10 @@ apps/extension/out/
 .env*
 .DS_Store
 pnpm-debug.log*
+
+# Playwright artifacts
+apps/extension/playwright-report/
+apps/extension/test-results/
+
+# TypeScript build artifacts
+**/*.tsbuildinfo
