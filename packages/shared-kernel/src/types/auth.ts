@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 export const UserSettingsSchema = z.object({
-  digestTime: z.string().regex(/^\d{2}:\d{2}$/).default("07:00"),
+  // openapi.yaml は ^[0-2][0-9]:[0-5][0-9]$ だが、実質的に 00-23 を許可する
+  digestTime: z.string().regex(/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/).default("07:00"),
   locale: z.string().default("ja-JP"),
   theme: z.enum(["light", "dark", "system"]).default("system"),
   shareDefaults: z.boolean().default(true)
@@ -23,4 +24,9 @@ export const AuthProfileSchema = z.object({
 });
 
 export type AuthProfile = z.infer<typeof AuthProfileSchema>;
+
+
+
+
+
 

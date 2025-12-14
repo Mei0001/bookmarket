@@ -3,17 +3,17 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 export interface BookmarkDb extends DBSchema {
   bookmarks: {
-    key: string;
+    key: BookmarkItem["id"];
     value: BookmarkItem;
     indexes: { sourceRuleId: string; status: string };
   };
   reminders: {
-    key: string;
+    key: ReviewReminder["id"];
     value: ReviewReminder;
     indexes: { bookmarkId: string; status: string };
   };
   digests: {
-    key: string;
+    key: DigestSnapshot["id"];
     value: DigestSnapshot;
     indexes: { generatedAt: string };
   };
@@ -34,8 +34,15 @@ const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<BookmarkDb>> | null = null;
 
+const isIndexedDbAvailable = () => typeof indexedDB !== "undefined";
+const isLocalStorageAvailable = () => typeof localStorage !== "undefined";
+
 async function getDatabase() {
   if (!dbPromise) {
+    if (!isIndexedDbAvailable()) {
+      throw new Error("IndexedDB is not available in this environment.");
+    }
+
     dbPromise = openDB<BookmarkDb>(DB_NAME, DB_VERSION, {
       upgrade(db, _oldVersion, _newVersion, transaction) {
         // bookmarks
@@ -68,7 +75,6 @@ async function getDatabase() {
           const store = transaction.objectStore("digests");
           if (!store.indexNames.contains("generatedAt")) store.createIndex("generatedAt", "generatedAt", { unique: false });
         }
-
         // socialSignals
         if (!db.objectStoreNames.contains("socialSignals")) {
           const store = db.createObjectStore("socialSignals", { keyPath: "id" });
@@ -94,6 +100,9 @@ async function getDatabase() {
         }
       }
     });
+
+    // R-004: 対応環境のみ永続化を要求
+    void requestPersistentStorage();
   }
   return dbPromise;
 }
@@ -154,9 +163,14 @@ export async function persistDigestSnapshot(snapshot: DigestSnapshot) {
 
 export async function getRecentDigests(limit = 3) {
   const db = await getDatabase();
-  const tx = db.transaction("digests", "readonly");
-  const snapshots = await tx.store.getAll();
-  return snapshots.sort((a, b) => (a.generatedAt < b.generatedAt ? 1 : -1)).slice(0, limit);
+  const index = db.transaction("digests", "readonly").store.index("generatedAt");
+  const snapshots: DigestSnapshot[] = [];
+  let cursor = await index.openCursor(undefined, "prev");
+  while (cursor && snapshots.length < limit) {
+    snapshots.push(cursor.value);
+    cursor = await cursor.continue();
+  }
+  return snapshots;
 }
 
 export async function persistSocialSignal(signal: SocialSignal) {
@@ -203,10 +217,12 @@ export const LocalStorageKeys = {
 } as const;
 
 export function setLocalValue<T>(key: (typeof LocalStorageKeys)[keyof typeof LocalStorageKeys], value: T) {
+  if (!isLocalStorageAvailable()) return;
   localStorage.setItem(key, JSON.stringify(value));
 }
 
 export function getLocalValue<T>(key: (typeof LocalStorageKeys)[keyof typeof LocalStorageKeys]): T | null {
+  if (!isLocalStorageAvailable()) return null;
   const raw = localStorage.getItem(key);
   if (!raw) return null;
   try {
@@ -216,7 +232,13 @@ export function getLocalValue<T>(key: (typeof LocalStorageKeys)[keyof typeof Loc
   }
 }
 
+export function removeLocalValue(key: (typeof LocalStorageKeys)[keyof typeof LocalStorageKeys]) {
+  if (!isLocalStorageAvailable()) return;
+  localStorage.removeItem(key);
+}
+
 export async function requestPersistentStorage() {
+  if (typeof navigator === "undefined") return;
   if (navigator.storage && navigator.storage.persist) {
     try {
       await navigator.storage.persist();
