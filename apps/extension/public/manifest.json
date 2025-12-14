@@ -15,7 +15,8 @@
     "bookmarks",
     "storage",
     "identity",
-    "alarms"
+    "alarms",
+    "notifications"
   ],
   "host_permissions": [
     "https://*/",
