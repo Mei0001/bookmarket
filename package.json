@@ -12,7 +12,6 @@
   },
   "scripts": {
     "dev": "pnpm --filter ./apps/extension dev",
-    "dev:sync": "pnpm --filter @bookmarket/shared-kernel build && pnpm --filter ./apps/sync dev",
     "build": "pnpm --filter ./apps/extension build",
     "lint": "pnpm --filter ./apps/extension lint",
     "typecheck": "pnpm --filter ./apps/extension typecheck",
@@ -25,10 +24,7 @@
   "devDependencies": {
     "@types/node": "^20",
     "esbuild": "^0.27.1",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.8",
     "rimraf": "^6.0.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5"
+    "tsx": "^4.21.0"
   }
 }

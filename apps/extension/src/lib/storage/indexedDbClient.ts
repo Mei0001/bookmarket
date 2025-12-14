@@ -81,7 +81,6 @@ async function getDatabase() {
           if (!store.indexNames.contains("bookmarkId")) store.createIndex("bookmarkId", "bookmarkId", { unique: false });
           if (!store.indexNames.contains("status")) store.createIndex("status", "status", { unique: false });
         }
-
         // digests
         if (!db.objectStoreNames.contains("digests")) {
           const store = db.createObjectStore("digests", { keyPath: "id" });
