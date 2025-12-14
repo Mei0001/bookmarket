@@ -1,4 +1,4 @@
-import type { BookmarkItem, ReviewReminder, DigestSnapshot } from "@bookmarket/shared-kernel";
+import type { BookmarkItem, ReviewReminder, DigestSnapshot, SourceRule, UserSettings } from "@bookmarket/shared-kernel";
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 export interface BookmarkDb extends DBSchema {
@@ -6,6 +6,15 @@ export interface BookmarkDb extends DBSchema {
     key: BookmarkItem["id"];
     value: BookmarkItem;
     indexes: { sourceRuleId: string; status: string };
+  };
+  sourceRules: {
+    key: SourceRule["id"];
+    value: SourceRule;
+    indexes: { userId: string; type: string };
+  };
+  userSettings: {
+    key: "singleton";
+    value: { id: "singleton"; value: UserSettings };
   };
   reminders: {
     key: ReviewReminder["id"];
@@ -20,7 +29,7 @@ export interface BookmarkDb extends DBSchema {
 }
 
 const DB_NAME = "bookmarket-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<BookmarkDb>> | null = null;
 
@@ -46,6 +55,22 @@ async function getDatabase() {
           if (!store.indexNames.contains("status")) store.createIndex("status", "status", { unique: false });
         }
 
+        // sourceRules
+        if (!db.objectStoreNames.contains("sourceRules")) {
+          const store = db.createObjectStore("sourceRules", { keyPath: "id" });
+          store.createIndex("userId", "userId", { unique: false });
+          store.createIndex("type", "type", { unique: false });
+        } else {
+          const store = transaction.objectStore("sourceRules");
+          if (!store.indexNames.contains("userId")) store.createIndex("userId", "userId", { unique: false });
+          if (!store.indexNames.contains("type")) store.createIndex("type", "type", { unique: false });
+        }
+
+        // userSettings (singleton)
+        if (!db.objectStoreNames.contains("userSettings")) {
+          db.createObjectStore("userSettings", { keyPath: "id" });
+        }
+
         // reminders
         if (!db.objectStoreNames.contains("reminders")) {
           const store = db.createObjectStore("reminders", { keyPath: "id" });
@@ -56,7 +81,6 @@ async function getDatabase() {
           if (!store.indexNames.contains("bookmarkId")) store.createIndex("bookmarkId", "bookmarkId", { unique: false });
           if (!store.indexNames.contains("status")) store.createIndex("status", "status", { unique: false });
         }
-
         // digests
         if (!db.objectStoreNames.contains("digests")) {
           const store = db.createObjectStore("digests", { keyPath: "id" });
@@ -81,24 +105,17 @@ export async function persistBookmarks(records: BookmarkItem[]) {
   await tx.done;
 }
 
-export async function persistBookmark(record: BookmarkItem) {
-  const db = await getDatabase();
-  await db.put("bookmarks", record);
-}
-
 export async function getAllBookmarks() {
   const db = await getDatabase();
   return db.getAll("bookmarks");
 }
 
-export async function getBookmark(id: string) {
+export async function overwriteAllBookmarks(records: BookmarkItem[]) {
   const db = await getDatabase();
-  return db.get("bookmarks", id);
-}
-
-export async function getBookmarksByStatus(status: BookmarkItem["status"]) {
-  const db = await getDatabase();
-  return db.getAllFromIndex("bookmarks", "status", status);
+  const tx = db.transaction("bookmarks", "readwrite");
+  await tx.store.clear();
+  await Promise.all(records.map((record) => tx.store.put(record)));
+  await tx.done;
 }
 
 export async function deleteBookmarks(ids: string[]) {
@@ -106,6 +123,42 @@ export async function deleteBookmarks(ids: string[]) {
   const tx = db.transaction("bookmarks", "readwrite");
   await Promise.all(ids.map((id) => tx.store.delete(id)));
   await tx.done;
+}
+
+export async function persistSourceRules(records: SourceRule[]) {
+  const db = await getDatabase();
+  const tx = db.transaction("sourceRules", "readwrite");
+  await Promise.all(records.map((record) => tx.store.put(record)));
+  await tx.done;
+}
+
+export async function overwriteAllSourceRules(records: SourceRule[]) {
+  const db = await getDatabase();
+  const tx = db.transaction("sourceRules", "readwrite");
+  await tx.store.clear();
+  await Promise.all(records.map((record) => tx.store.put(record)));
+  await tx.done;
+}
+
+export async function getAllSourceRules() {
+  const db = await getDatabase();
+  return db.getAll("sourceRules");
+}
+
+export async function deleteSourceRule(id: string) {
+  const db = await getDatabase();
+  await db.delete("sourceRules", id);
+}
+
+export async function getUserSettings() {
+  const db = await getDatabase();
+  const stored = await db.get("userSettings", "singleton");
+  return stored?.value ?? null;
+}
+
+export async function persistUserSettings(value: UserSettings) {
+  const db = await getDatabase();
+  await db.put("userSettings", { id: "singleton", value });
 }
 
 export async function persistReminder(reminder: ReviewReminder) {
@@ -118,24 +171,9 @@ export async function getReminder(id: string) {
   return db.get("reminders", id);
 }
 
-export async function getAllReminders() {
-  const db = await getDatabase();
-  return db.getAll("reminders");
-}
-
 export async function getRemindersByBookmark(bookmarkId: string) {
   const db = await getDatabase();
   return db.getAllFromIndex("reminders", "bookmarkId", bookmarkId);
-}
-
-export async function getRemindersByStatus(status: ReviewReminder["status"]) {
-  const db = await getDatabase();
-  return db.getAllFromIndex("reminders", "status", status);
-}
-
-export async function deleteReminder(id: string) {
-  const db = await getDatabase();
-  await db.delete("reminders", id);
 }
 
 export async function persistDigestSnapshot(snapshot: DigestSnapshot) {

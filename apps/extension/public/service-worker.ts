@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import type { BookmarkItem, ReviewReminder, DigestSnapshot } from "@bookmarket/shared-kernel";
+import type { BookmarkItem, ReviewReminder, DigestSnapshot, SourceRule, UserSettings } from "@bookmarket/shared-kernel";
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { computeNextScheduledFor, MAX_RENOTIFY_COUNT } from "../src/lib/reminders/reviewReminderPolicy";
 import { REVIEW_REMINDER_ALARM_PREFIX } from "../src/lib/reminders/chromeReminderAlarms";
@@ -21,6 +21,15 @@ interface BookmarkDb extends DBSchema {
     value: BookmarkItem;
     indexes: { sourceRuleId: string; status: string };
   };
+  sourceRules: {
+    key: SourceRule["id"];
+    value: SourceRule;
+    indexes: { userId: string; type: string };
+  };
+  userSettings: {
+    key: "singleton";
+    value: { id: "singleton"; value: UserSettings };
+  };
   reminders: {
     key: ReviewReminder["id"];
     value: ReviewReminder;
@@ -34,7 +43,7 @@ interface BookmarkDb extends DBSchema {
 }
 
 const DB_NAME = "bookmarket-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<BookmarkDb>> | null = null;
 
@@ -51,6 +60,22 @@ async function getDatabase() {
           const store = transaction.objectStore("bookmarks");
           if (!store.indexNames.contains("sourceRuleId")) store.createIndex("sourceRuleId", "sourceRuleId", { unique: false });
           if (!store.indexNames.contains("status")) store.createIndex("status", "status", { unique: false });
+        }
+
+        // sourceRules
+        if (!db.objectStoreNames.contains("sourceRules")) {
+          const store = db.createObjectStore("sourceRules", { keyPath: "id" });
+          store.createIndex("userId", "userId", { unique: false });
+          store.createIndex("type", "type", { unique: false });
+        } else {
+          const store = transaction.objectStore("sourceRules");
+          if (!store.indexNames.contains("userId")) store.createIndex("userId", "userId", { unique: false });
+          if (!store.indexNames.contains("type")) store.createIndex("type", "type", { unique: false });
+        }
+
+        // userSettings (singleton)
+        if (!db.objectStoreNames.contains("userSettings")) {
+          db.createObjectStore("userSettings", { keyPath: "id" });
         }
 
         // reminders
