@@ -81,9 +81,24 @@ export async function persistBookmarks(records: BookmarkItem[]) {
   await tx.done;
 }
 
+export async function persistBookmark(record: BookmarkItem) {
+  const db = await getDatabase();
+  await db.put("bookmarks", record);
+}
+
 export async function getAllBookmarks() {
   const db = await getDatabase();
   return db.getAll("bookmarks");
+}
+
+export async function getBookmark(id: string) {
+  const db = await getDatabase();
+  return db.get("bookmarks", id);
+}
+
+export async function getBookmarksByStatus(status: BookmarkItem["status"]) {
+  const db = await getDatabase();
+  return db.getAllFromIndex("bookmarks", "status", status);
 }
 
 export async function deleteBookmarks(ids: string[]) {
@@ -103,9 +118,24 @@ export async function getReminder(id: string) {
   return db.get("reminders", id);
 }
 
+export async function getAllReminders() {
+  const db = await getDatabase();
+  return db.getAll("reminders");
+}
+
 export async function getRemindersByBookmark(bookmarkId: string) {
   const db = await getDatabase();
   return db.getAllFromIndex("reminders", "bookmarkId", bookmarkId);
+}
+
+export async function getRemindersByStatus(status: ReviewReminder["status"]) {
+  const db = await getDatabase();
+  return db.getAllFromIndex("reminders", "status", status);
+}
+
+export async function deleteReminder(id: string) {
+  const db = await getDatabase();
+  await db.delete("reminders", id);
 }
 
 export async function persistDigestSnapshot(snapshot: DigestSnapshot) {
