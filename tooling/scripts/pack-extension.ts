@@ -66,9 +66,3 @@ main().catch((error) => {
   console.error("Failed to pack extension", error);
   process.exit(1);
 });
-
-
-
-
-
-
