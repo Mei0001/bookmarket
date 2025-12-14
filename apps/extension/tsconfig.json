@@ -21,7 +21,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@bookmarket/shared-kernel": ["../../packages/shared-kernel/src/index.ts"],
+      "@bookmarket/shared-kernel/*": ["../../packages/shared-kernel/src/*"]
     }
   },
   "include": [

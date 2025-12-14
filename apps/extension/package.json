@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
+    "test": "pnpm test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright install chromium && playwright test",
