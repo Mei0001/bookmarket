@@ -7,12 +7,12 @@
 
 **Purpose**: プロジェクトの骨格とビルド/実行環境を整える
 
-- [ ] T001 Initialize pnpm workspace and root configs in `/Users/mei/bookmarket/bookmarket/package.json` と `pnpm-workspace.yaml`
-- [ ] T002 Scaffold Next.js App Router project under `/Users/mei/bookmarket/bookmarket/apps/extension` with TypeScript & App Router enabled
-- [ ] T003 Configure Tailwind CSS + PostCSS in `apps/extension/tailwind.config.ts` と `apps/extension/postcss.config.js`
+- [x] T001 Initialize pnpm workspace and root configs in `/Users/mei/bookmarket/bookmarket/package.json` と `pnpm-workspace.yaml`
+- [x] T002 Scaffold Next.js App Router project under `/Users/mei/bookmarket/bookmarket/apps/extension` with TypeScript & App Router enabled
+- [x] T003 Configure Tailwind CSS + PostCSS in `apps/extension/tailwind.config.ts` と `apps/extension/postcss.config.js`
 - [ ] T004 Add lint/test tooling (ESLint, Vitest, Playwright) in `apps/extension/package.json`, `apps/extension/vitest.config.ts`, `apps/extension/playwright.config.ts`
-- [ ] T005 Provision environment samples for OAuth/Sheets by editing `/Users/mei/bookmarket/bookmarket/.env.example` と `apps/extension/README.md`
-- [ ] T006 Add Chrome MV3 manifest + service worker entry in `apps/extension/public/manifest.json` と `apps/extension/public/service-worker.ts`
+- [x] T005 Provision environment samples for OAuth/Sheets by editing `/Users/mei/bookmarket/bookmarket/.env.example` と `apps/extension/README.md`
+- [x] T006 Add Chrome MV3 manifest + service worker entry in `apps/extension/public/manifest.json` と `apps/extension/public/service-worker.ts`
 
 ---
 
@@ -20,12 +20,12 @@
 
 **Purpose**: すべてのユーザーストーリーが依存するコア層
 
-- [ ] T007 Define shared domain types & zod schemas (SourceRule/BookmarkItem/AuthProfile) in `packages/shared-kernel/src/types/*.ts`
-- [ ] T008 [P] Implement LocalStorage + IndexedDB persistence helpers per R-004 in `apps/extension/lib/storage/indexedDbClient.ts`
-- [ ] T009 [P] Build Chrome bookmarks adapter & diff utilities in `apps/extension/lib/bookmarks/chromeBookmarksAdapter.ts`
-- [ ] T010 Establish global layout/theme shell with Tailwind layers in `apps/extension/app/layout.tsx` と `apps/extension/styles/globals.css`
+- [x] T007 Define shared domain types & zod schemas (SourceRule/BookmarkItem/AuthProfile) in `packages/shared-kernel/src/types/*.ts`
+- [x] T008 [P] Implement LocalStorage + IndexedDB persistence helpers per R-004 in `apps/extension/lib/storage/indexedDbClient.ts`
+- [x] T009 [P] Build Chrome bookmarks adapter & diff utilities in `apps/extension/lib/bookmarks/chromeBookmarksAdapter.ts`
+- [x] T010 Establish global layout/theme shell with Tailwind layers in `apps/extension/app/layout.tsx` と `apps/extension/styles/globals.css`
 - [ ] T011 [P] Scaffold Next.js Route Handler tree (`apps/extension/app/api/health/route.ts`) and shared response utils `apps/extension/lib/api/response.ts`
-- [ ] T012 Wire packaging script for MV3 (`tooling/scripts/pack-extension.ts`) referencing `next export` + manifest bundling
+- [x] T012 Wire packaging script for MV3 (`tooling/scripts/pack-extension.ts`) referencing `output: "export"` build + manifest bundling
 
 **Checkpoint**: ここまででUI/データ層/ビルドが整い、各ユーザーストーリーを独立に実装できる
 
