@@ -12,8 +12,3 @@ export const SocialSignalSchema = z.object({
 });
 
 export type SocialSignal = z.infer<typeof SocialSignalSchema>;
-
-
-
-
-

@@ -40,17 +40,6 @@ async function getDatabase() {
 
     dbPromise = openDB<BookmarkDb>(DB_NAME, DB_VERSION, {
       upgrade(db, _oldVersion, _newVersion, transaction) {
-        // sourceRules
-        if (!db.objectStoreNames.contains("sourceRules")) {
-          const store = db.createObjectStore("sourceRules", { keyPath: "id" });
-          store.createIndex("type", "type", { unique: false });
-          store.createIndex("pattern", "pattern", { unique: false });
-        } else {
-          const store = transaction.objectStore("sourceRules");
-          if (!store.indexNames.contains("type")) store.createIndex("type", "type", { unique: false });
-          if (!store.indexNames.contains("pattern")) store.createIndex("pattern", "pattern", { unique: false });
-        }
-
         // bookmarks
         if (!db.objectStoreNames.contains("bookmarks")) {
           const store = db.createObjectStore("bookmarks", { keyPath: "id" });
@@ -72,7 +61,17 @@ async function getDatabase() {
           if (!store.indexNames.contains("bookmarkId")) store.createIndex("bookmarkId", "bookmarkId", { unique: false });
           if (!store.indexNames.contains("status")) store.createIndex("status", "status", { unique: false });
         }
-
+ 
+        // sourceRules (us1で追加)
+        if (!db.objectStoreNames.contains("sourceRules")) {
+          const store = db.createObjectStore("sourceRules", { keyPath: "id" });
+          store.createIndex("type", "type", { unique: false });
+          store.createIndex("pattern", "pattern", { unique: false });
+        } else {
+          const store = transaction.objectStore("sourceRules");
+          if (!store.indexNames.contains("type")) store.createIndex("type", "type", { unique: false });
+          if (!store.indexNames.contains("pattern")) store.createIndex("pattern", "pattern", { unique: false });
+        }
         // digests
         if (!db.objectStoreNames.contains("digests")) {
           const store = db.createObjectStore("digests", { keyPath: "id" });
