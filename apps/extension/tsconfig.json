@@ -20,10 +20,10 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@bookmarket/shared-kernel": ["../../packages/shared-kernel/src/index.ts"],
-      "@bookmarket/shared-kernel/*": ["../../packages/shared-kernel/src/*"]
+      "@bookmarket/shared-kernel": ["../../packages/shared-kernel/src/index.ts"]
     }
   },
   "include": [
