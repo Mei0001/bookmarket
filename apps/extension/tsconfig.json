@@ -20,6 +20,7 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@bookmarket/shared-kernel": ["../../packages/shared-kernel/src/index.ts"]
