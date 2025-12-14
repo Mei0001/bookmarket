@@ -25,8 +25,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <div className="app-shell">{children}</div>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-surface text-foreground font-sans`}
+      >
+        <div className="app-frame">
+          <div className="app-shell">{children}</div>
+        </div>
       </body>
     </html>
   );
