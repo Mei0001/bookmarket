@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright install chromium && playwright test",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
     "export": "next build"
   },
   "dependencies": {
