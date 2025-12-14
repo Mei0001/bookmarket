@@ -24,8 +24,3 @@ export const AuthProfileSchema = z.object({
 });
 
 export type AuthProfile = z.infer<typeof AuthProfileSchema>;
-
-
-
-
-

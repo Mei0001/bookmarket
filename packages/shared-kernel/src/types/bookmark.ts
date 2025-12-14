@@ -44,8 +44,3 @@ export const BookmarkUpsertSchema = z.object({
   note: z.string().nullable().optional()
 });
 export type BookmarkUpsert = z.infer<typeof BookmarkUpsertSchema>;
-
-
-
-
-

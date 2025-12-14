@@ -25,8 +25,3 @@ self.addEventListener("message", (event) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   log("alarm fired", alarm.name);
 });
-
-
-
-
-
