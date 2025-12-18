@@ -180,6 +180,11 @@ export async function deleteBookmarks(ids: string[]) {
   await tx.done;
 }
 
+export async function persistSourceRule(record: SourceRule) {
+  const db = await getDatabase();
+  await db.put("sourceRules", record);
+}
+
 export async function persistSourceRules(records: SourceRule[]) {
   const db = await getDatabase();
   const tx = db.transaction("sourceRules", "readwrite");
@@ -236,6 +241,11 @@ export async function persistReminder(reminder: ReviewReminder) {
 export async function getReminder(id: string) {
   const db = await getDatabase();
   return db.get("reminders", id);
+}
+
+export async function deleteReminder(id: string) {
+  const db = await getDatabase();
+  await db.delete("reminders", id);
 }
 
 export async function getAllReminders() {

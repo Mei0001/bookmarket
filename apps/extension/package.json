@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@bookmarket/shared-kernel": "workspace:^",
+    "googleapis": "^169.0.0",
     "idb": "^8.0.3",
-    "googleapis": "^144.0.0",
     "next": "16.0.8",
     "react": "19.2.1",
     "react-dom": "19.2.1"
