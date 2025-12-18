@@ -10,10 +10,3 @@ export const ReviewReminderSchema = z.object({
 });
 
 export type ReviewReminder = z.infer<typeof ReviewReminderSchema>;
-
-
-
-
-
-
-

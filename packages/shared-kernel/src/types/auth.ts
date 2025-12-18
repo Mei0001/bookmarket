@@ -8,6 +8,8 @@ export const UserSettingsSchema = z.object({
   shareDefaults: z.boolean().default(true)
 });
 
+export type UserSettings = z.infer<typeof UserSettingsSchema>;
+
 export const AuthProfileSchema = z.object({
   userId: z.string().min(1),
   email: z.string().email(),
@@ -24,10 +26,3 @@ export const AuthProfileSchema = z.object({
 });
 
 export type AuthProfile = z.infer<typeof AuthProfileSchema>;
-
-
-
-
-
-
-

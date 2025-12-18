@@ -15,7 +15,8 @@
     "bookmarks",
     "storage",
     "identity",
-    "alarms"
+    "alarms",
+    "notifications"
   ],
   "host_permissions": [
     "https://*/",
@@ -28,10 +29,3 @@
     "128": "icons/icon128.png"
   }
 }
-
-
-
-
-
-
-

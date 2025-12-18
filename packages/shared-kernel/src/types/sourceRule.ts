@@ -91,10 +91,3 @@ export const SourceRuleUpdateSchema = z
   })
   .strict();
 export type SourceRuleUpdate = z.infer<typeof SourceRuleUpdateSchema>;
-
-
-
-
-
-
-
