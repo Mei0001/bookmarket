@@ -1,7 +1,12 @@
-import type { BookmarkItem, ReviewReminder, DigestSnapshot } from "@bookmarket/shared-kernel";
+import type { BookmarkItem, ReviewReminder, DigestSnapshot, SourceRule } from "@bookmarket/shared-kernel";
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 export interface BookmarkDb extends DBSchema {
+  sourceRules: {
+    key: SourceRule["id"];
+    value: SourceRule;
+    indexes: { userId: string; type: string };
+  };
   bookmarks: {
     key: BookmarkItem["id"];
     value: BookmarkItem;
@@ -20,7 +25,7 @@ export interface BookmarkDb extends DBSchema {
 }
 
 const DB_NAME = "bookmarket-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<BookmarkDb>> | null = null;
 
@@ -35,6 +40,17 @@ async function getDatabase() {
 
     dbPromise = openDB<BookmarkDb>(DB_NAME, DB_VERSION, {
       upgrade(db, _oldVersion, _newVersion, transaction) {
+        // sourceRules
+        if (!db.objectStoreNames.contains("sourceRules")) {
+          const store = db.createObjectStore("sourceRules", { keyPath: "id" });
+          store.createIndex("userId", "userId", { unique: false });
+          store.createIndex("type", "type", { unique: false });
+        } else {
+          const store = transaction.objectStore("sourceRules");
+          if (!store.indexNames.contains("userId")) store.createIndex("userId", "userId", { unique: false });
+          if (!store.indexNames.contains("type")) store.createIndex("type", "type", { unique: false });
+        }
+
         // bookmarks
         if (!db.objectStoreNames.contains("bookmarks")) {
           const store = db.createObjectStore("bookmarks", { keyPath: "id" });
@@ -72,6 +88,33 @@ async function getDatabase() {
     void requestPersistentStorage();
   }
   return dbPromise;
+}
+
+export async function persistSourceRule(rule: SourceRule) {
+  const db = await getDatabase();
+  await db.put("sourceRules", rule);
+}
+
+export async function persistSourceRules(rules: SourceRule[]) {
+  const db = await getDatabase();
+  const tx = db.transaction("sourceRules", "readwrite");
+  await Promise.all(rules.map((rule) => tx.store.put(rule)));
+  await tx.done;
+}
+
+export async function getAllSourceRules() {
+  const db = await getDatabase();
+  return db.getAll("sourceRules");
+}
+
+export async function getSourceRule(id: string) {
+  const db = await getDatabase();
+  return db.get("sourceRules", id);
+}
+
+export async function deleteSourceRule(id: string) {
+  const db = await getDatabase();
+  await db.delete("sourceRules", id);
 }
 
 export async function persistBookmarks(records: BookmarkItem[]) {

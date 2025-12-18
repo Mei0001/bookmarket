@@ -17,13 +17,15 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: "pnpm dev -- --port 3000",
+    // pnpm の引数転送で "--" が script に渡ってしまうため、素直に -p を渡す
+    command: "pnpm dev -p 3000",
     // 既存のdevサーバーが起動しているか判定するURL（/ が一時的に500でも health は通る想定）
     url: "http://localhost:3000/api/health",
     timeout: 120 * 1000,
     reuseExistingServer: true
   }
 });
+
 
 
 
