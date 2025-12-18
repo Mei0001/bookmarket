@@ -3,7 +3,7 @@ import type { BookmarkItem } from "@bookmarket/shared-kernel";
 import { diffById } from "@/lib/bookmarks/bookmarkDiff";
 import { fetchUrlBookmarks } from "@/lib/bookmarks/chromeBookmarksAdapter";
 import { getAllBookmarks, deleteBookmarks, persistBookmarks, setLocalValue, LocalStorageKeys } from "@/lib/storage/indexedDbClient";
-import { listSourceRules, setSourceRuleSyncStatus } from "@/lib/sourceRules/sourceRuleRepository";
+import { listSourceRulesByUser, setSourceRuleSyncStatus } from "@/lib/sourceRules/sourceRuleRepository";
 import { buildBookmarkItemsFromChrome, type SyncReport } from "@/lib/sync/bookmarkSync";
 
 const isChromeBookmarksAvailable = () => typeof chrome !== "undefined" && !!chrome.bookmarks;
@@ -22,13 +22,14 @@ function equalsBookmark(a: BookmarkItem, b: BookmarkItem) {
   );
 }
 
-export async function syncBookmarksFromChrome(): Promise<SyncReport> {
+export async function syncBookmarksFromChrome(params?: { userId?: string }): Promise<SyncReport> {
   if (!isChromeBookmarksAvailable()) {
     throw new Error("Chrome bookmarks API が利用できません（拡張環境で実行してください）。");
   }
 
   const now = new Date().toISOString();
-  const rules = (await listSourceRules()).filter((r) => r.type === "domain");
+  const userId = params?.userId ?? "local";
+  const rules = (await listSourceRulesByUser(userId)).filter((r) => r.type === "domain");
   if (rules.length === 0) {
     return { totalChromeBookmarks: 0, matched: 0, deduped: 0, persisted: 0, removed: 0 };
   }

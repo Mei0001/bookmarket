@@ -26,7 +26,12 @@ export async function listSourceRules(): Promise<SourceRule[]> {
   return [...rules].sort((a, b) => a.label.localeCompare(b.label, "ja"));
 }
 
-export async function createSourceRule(input: SourceRuleCreate): Promise<SourceRule> {
+export async function listSourceRulesByUser(userId: string): Promise<SourceRule[]> {
+  const rules = await getAllSourceRules();
+  return rules.filter((r) => r.userId === userId).sort((a, b) => a.label.localeCompare(b.label, "ja"));
+}
+
+export async function createSourceRule(input: SourceRuleCreate, options?: { userId?: string }): Promise<SourceRule> {
   const parsed = SourceRuleCreateSchema.safeParse(input);
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid SourceRule");
@@ -38,7 +43,7 @@ export async function createSourceRule(input: SourceRuleCreate): Promise<SourceR
 
   const candidate: SourceRule = {
     id: randomId(),
-    userId: LOCAL_USER_ID,
+    userId: options?.userId ?? LOCAL_USER_ID,
     label: parsed.data.label.trim(),
     type: parsed.data.type,
     pattern: normalizeDomain(parsed.data.pattern),

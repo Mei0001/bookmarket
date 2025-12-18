@@ -7,6 +7,7 @@ import type { SourceRule } from "@bookmarket/shared-kernel";
 
 import { createSourceRule, deleteSourceRule, listSourceRules, updateSourceRule } from "@/lib/sourceRules/sourceRuleRepository";
 import { syncBookmarksFromChrome } from "@/lib/sync/runBookmarkSync";
+import { useExtensionAuth } from "@/lib/auth/useExtensionAuth";
 
 type CreateForm = {
   label: string;
@@ -131,6 +132,7 @@ function RuleRow(props: {
 }
 
 export function OptionsApp() {
+  const auth = useExtensionAuth();
   const [rules, setRules] = useState<SourceRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -164,7 +166,10 @@ export function OptionsApp() {
       setMessage(null);
       setError(null);
       try {
-        await createSourceRule({ label: form.label.trim(), type: "domain", pattern: form.domain.trim(), colorHex: form.colorHex.trim() });
+        await createSourceRule(
+          { label: form.label.trim(), type: "domain", pattern: form.domain.trim(), colorHex: form.colorHex.trim() },
+          { userId: auth.userId }
+        );
         setForm({ label: "", domain: "", colorHex: form.colorHex || "#2563eb" });
         await reload();
         setMessage("SourceRule を追加しました。");
@@ -172,7 +177,7 @@ export function OptionsApp() {
         setError(err instanceof Error ? err.message : "追加に失敗しました");
       }
     },
-    [canCreate, form.colorHex, form.domain, form.label, reload]
+    [auth.userId, canCreate, form.colorHex, form.domain, form.label, reload]
   );
 
   const onSync = useCallback(async () => {
@@ -180,7 +185,7 @@ export function OptionsApp() {
     setMessage(null);
     setError(null);
     try {
-      const report = await syncBookmarksFromChrome();
+      const report = await syncBookmarksFromChrome({ userId: auth.userId });
       await reload();
       setMessage(`同期完了: matched=${report.matched}, deduped=${report.deduped}, persisted=${report.persisted}, removed=${report.removed}`);
     } catch (err) {
@@ -188,7 +193,7 @@ export function OptionsApp() {
     } finally {
       setSyncing(false);
     }
-  }, [reload]);
+  }, [auth.userId, reload]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-10">
@@ -198,16 +203,59 @@ export function OptionsApp() {
             <p className="text-sm uppercase tracking-widest text-gray-500">Options</p>
             <h1 className="text-3xl font-semibold">SourceRule 管理</h1>
           </div>
-          <Link
-            href="/"
-            className="rounded-xl border border-border bg-surface-alt px-4 py-2 text-sm font-medium hover:bg-surface"
-          >
-            Home に戻る
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {auth.profile ? (
+              <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-alt px-3 py-2">
+                <span className="text-xs text-gray-600">Signed in:</span>
+                <span className="max-w-[180px] truncate text-sm font-medium">{auth.profile.displayName}</span>
+                <button
+                  type="button"
+                  className="rounded-lg border border-border bg-white px-2 py-1 text-xs font-medium hover:bg-surface"
+                  onClick={() => void auth.actions.signOut()}
+                  disabled={!!auth.busy}
+                >
+                  サインアウト
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                onClick={() => void auth.actions.signIn()}
+                disabled={!!auth.busy || !auth.canInteractiveSignIn}
+                title={auth.canInteractiveSignIn ? "Googleでサインイン" : "拡張機能として実行してください"}
+              >
+                Googleでサインイン
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="rounded-xl border border-border bg-surface-alt px-4 py-2 text-sm font-medium hover:bg-surface disabled:opacity-50"
+              onClick={() => void auth.actions.pushToRemote()}
+              disabled={!auth.token || !!auth.busy}
+            >
+              同期（保存）
+            </button>
+            <button
+              type="button"
+              className="rounded-xl border border-border bg-surface-alt px-4 py-2 text-sm font-medium hover:bg-surface disabled:opacity-50"
+              onClick={() => void auth.actions.restoreFromRemote()}
+              disabled={!auth.token || !!auth.busy}
+            >
+              復元
+            </button>
+
+            <Link href="/" className="rounded-xl border border-border bg-surface-alt px-4 py-2 text-sm font-medium hover:bg-surface">
+              Home に戻る
+            </Link>
+          </div>
         </div>
         <p className="text-sm text-gray-600">
           対象ドメインを登録し、「同期する」で Chrome ブックマークから抽出・重複排除して保存します。
         </p>
+        {auth.busy ? <p className="text-sm text-blue-700">{auth.busy}</p> : null}
+        {auth.error ? <p className="text-sm text-orange-600">{auth.error}</p> : null}
       </header>
 
       <section className="card-surface p-6 shadow-card">

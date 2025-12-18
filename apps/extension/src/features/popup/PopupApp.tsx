@@ -9,6 +9,7 @@ import { getAllBookmarks } from "@/lib/storage/indexedDbClient";
 import { listSourceRules } from "@/lib/sourceRules/sourceRuleRepository";
 import { sortBookmarks, type BookmarkSortKey } from "@/lib/sync/bookmarkSync";
 import { syncBookmarksFromChrome } from "@/lib/sync/runBookmarkSync";
+import { useExtensionAuth } from "@/lib/auth/useExtensionAuth";
 
 function openUrl(url: string) {
   try {
@@ -29,6 +30,7 @@ function formatDate(value: string) {
 }
 
 export function PopupApp() {
+  const auth = useExtensionAuth();
   const [items, setItems] = useState<BookmarkItem[]>([]);
   const [rules, setRules] = useState<SourceRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +67,7 @@ export function PopupApp() {
     setMessage(null);
     setError(null);
     try {
-      const report = await syncBookmarksFromChrome();
+      const report = await syncBookmarksFromChrome({ userId: auth.userId });
       await reload();
       setMessage(`同期完了: matched=${report.matched}, deduped=${report.deduped}`);
     } catch (e) {
@@ -73,7 +75,7 @@ export function PopupApp() {
     } finally {
       setSyncing(false);
     }
-  }, [reload]);
+  }, [auth.userId, reload]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-10">
@@ -84,6 +86,27 @@ export function PopupApp() {
             <h1 className="text-3xl font-semibold">ブックマーク一覧</h1>
           </div>
           <div className="flex gap-2">
+            {auth.profile ? (
+              <button
+                type="button"
+                className="rounded-xl border border-border bg-surface-alt px-4 py-2 text-sm font-medium hover:bg-surface disabled:opacity-50"
+                onClick={() => void auth.actions.restoreFromRemote()}
+                disabled={!auth.token || !!auth.busy}
+                title="サーバーの設定/ブックマークを復元"
+              >
+                復元
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="rounded-xl border border-border bg-surface-alt px-4 py-2 text-sm font-medium hover:bg-surface disabled:opacity-50"
+                onClick={() => void auth.actions.signIn()}
+                disabled={!!auth.busy || !auth.canInteractiveSignIn}
+                title={auth.canInteractiveSignIn ? "Googleでサインイン" : "拡張機能として実行してください"}
+              >
+                Login
+              </button>
+            )}
             <button
               type="button"
               className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
@@ -101,6 +124,9 @@ export function PopupApp() {
           </div>
         </div>
         <p className="text-sm text-gray-600">対象ドメインのみを抽出し、URL重複を排除した一覧です。</p>
+        {auth.profile ? <p className="text-xs text-gray-500">Signed in: {auth.profile.email}</p> : null}
+        {auth.busy ? <p className="text-sm text-blue-700">{auth.busy}</p> : null}
+        {auth.error ? <p className="text-sm text-orange-600">{auth.error}</p> : null}
         {message ? <p className="text-sm text-green-700">{message}</p> : null}
         {error ? <p className="text-sm text-orange-600">{error}</p> : null}
       </header>
